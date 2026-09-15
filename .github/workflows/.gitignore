@@ -1,0 +1,6 @@
+webhook_config.json
+monitor_console.log
+*.bak
+snapshot.bak
+__pycache__/
+*.pyc
