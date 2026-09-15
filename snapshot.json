@@ -1,0 +1,26 @@
+{
+  "ts": "2026-09-15 08:37:06",
+  "platePay": {
+    "currentAmount": "1.00",
+    "orderId": "2026091516370778926796",
+    "historyCountHint": "1",
+    "plateNo": "湘ADG3397"
+  },
+  "arrears": {
+    "arrearsList": [
+      {
+        "arrearsAmount": 1.0,
+        "driveInTime": "2026-08-** 14:34:25",
+        "driveOutTime": "2026-08-** 15:20:19",
+        "id": 10060561374,
+        "parkingNo": "J3162063",
+        "parkingTime": "45分54秒",
+        "plateColor": 3,
+        "plateNo": "湘AD*3397",
+        "roadName": "黄**"
+      }
+    ],
+    "historyAmount": "1.00",
+    "historyCount": "1"
+  }
+}
