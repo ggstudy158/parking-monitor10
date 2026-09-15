@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-湘ADG3397 停车费账单监控器
-- 每 10 分钟轮询两个链接，解析服务器直接写入的隐藏字段
-- 检测「在停金额 / 订单号 / 历史欠费列表」的变化
-- 变化时写入 changes.log，并可选推送 webhook
-
-用法:
-  python3 parking_monitor.py --once            # 立即跑一次并显示解析结果(基线)
-  python3 parking_monitor.py --loop            # 每 600 秒循环监控(默认)
-  python3 parking_monitor.py --loop --webhook https://your-webhook  # 变化时推送
-  python3 parking_monitor.py --loop --interval 600
-"""
+# 湘ADG3397 停车费账单监控器
+# - 每 10 分钟轮询两个链接，解析服务器直接写入的隐藏字段
+# - 检测「在停金额 / 订单号 / 历史欠费列表」的变化
+# - 变化时写入 changes.log，并可选推送 webhook
+#
+# 用法:
+# python3 parking_monitor.py --once            # 立即跑一次并显示解析结果(基线)
+# python3 parking_monitor.py --loop            # 每 600 秒循环监控(默认)
+# python3 parking_monitor.py --loop --webhook https://your-webhook  # 变化时推送
+# python3 parking_monitor.py --loop --interval 600
 
 import re
 import json
@@ -50,17 +48,17 @@ def fetch(url):
 
 
 def parse_platepay(html):
-    """在停支付页：当前在停金额、订单号、历史欠费笔数(首页提示)"""
+    # 在停支付页：当前在停金额、订单号、历史欠费笔数(首页提示)
     data = {}
     m = re.search(r'roder-info-amount-arrearsAmount"[^>]*>\s*<span>([\d.]+)</span>', html)
     if not m:
-        m = re.search(r'<p class="amount">([\d.]+)</p >', html)
+        m = re.search(r'<p class="amount">([\d.]+)</p>', html)
     data["currentAmount"] = m.group(1) if m else None
 
     m = re.search(r'订单编号：\s*<span>([^<]+)</span>', html)
     data["orderId"] = m.group(1).strip() if m else None
 
-    m = re.search(r'历史未缴订单信息\s*<div class="tips">\s*<p>(\d+)</p >', html)
+    m = re.search(r'历史未缴订单信息\s*<div class="tips">\s*<p>(\d+)</p>', html)
     data["historyCountHint"] = m.group(1) if m else None
 
     m = re.search(r'hidPlateNo"[^>]*value="([^"]*)"', html)
@@ -69,11 +67,11 @@ def parse_platepay(html):
 
 
 def parse_arrears(html):
-    """欠费补缴页：完整欠费列表(含泊位号/时间/脱敏姓名) + 合计"""
+    # 欠费补缴页：完整欠费列表(含泊位号/时间/脱敏姓名) + 合计
     out = {"arrearsList": [], "historyAmount": None, "historyCount": None}
     m = re.search(r'hidArrearsList"[^>]*value="([^"]*)"', html)
     if m:
-        raw = m.group(1).replace(""", '"')
+        raw = m.group(1).replace("&quot;", '"')
         try:
             out["arrearsList"] = json.loads(raw)
         except Exception:
@@ -86,7 +84,7 @@ def parse_arrears(html):
 
 
 def collect():
-    """抓取两页并汇总成可比较的快照字典"""
+    # 抓取两页并汇总成可比较的快照字典
     snap = {"ts": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
         snap["platePay"] = parse_platepay(fetch(URL_PLATEPAY))
@@ -101,7 +99,7 @@ def collect():
 
 # ---------------- 变化检测 ----------------
 def normalize_for_compare(snap):
-    # keep only fields used for comparison
+    # 只抽取用于比较的关键字段，忽略抓取时间戳
     pp = snap.get("platePay", {})
     ar = snap.get("arrears", {})
     return {
@@ -118,7 +116,7 @@ def normalize_for_compare(snap):
 
 
 def detect_changes(old_cmp, new_cmp):
-    """返回人类可读的变化列表。无历史快照时仅静默建立基线，不推送。"""
+    # 返回人类可读的变化列表。无历史快照时仅静默建立基线，不推送。
     changes = []
     if old_cmp is None:
         return []  # 首次建立基线，静默处理，避免云端无持久化时反复刷屏
@@ -155,7 +153,7 @@ def log_change(snap, changes):
 
 
 def dingtalk_sign(secret):
-    """钉钉加签: timestamp + HMAC-SHA256 + base64 + urlencode"""
+    # 钉钉加签: timestamp + HMAC-SHA256 + base64 + urlencode
     timestamp = str(round(time.time() * 1000))
     string_to_sign = f"{timestamp}\n{secret}"
     hmac_code = hmac.new(secret.encode("utf-8"),
@@ -166,9 +164,9 @@ def dingtalk_sign(secret):
 
 
 def push_webhook(webhook, snap, changes, sign_secret=None):
-    """推送变更到机器人 webhook。
-    自动适配: 飞书(feishu) 用 msg_type/content.text；企业微信/钉钉 用 msgtype/text.content。
-    钉钉若启用「加签」安全设置，传入 sign_secret 会自动追加 timestamp/sign 参数。"""
+    # 推送变更到机器人 webhook。
+    # 自动适配: 飞书(feishu) 用 msg_type/content.text；企业微信/钉钉 用 msgtype/text.content。
+    # 钉钉若启用「加签」安全设置，传入 sign_secret 会自动追加 timestamp/sign 参数。
     text = f"【湘ADG3397 停车账单更新】\n时间: {snap['ts']}\n" + "\n".join(f"- {c}" for c in changes)
     lower = webhook.lower()
     if "feishu" in lower or "larksuite" in lower:
