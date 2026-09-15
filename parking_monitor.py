@@ -101,7 +101,7 @@ def collect():
 
 # ---------------- 变化检测 ----------------
 def normalize_for_compare(snap):
-    """只抽取用于比较的关键字段，忽略抓取时间戳"""
+    # keep only fields used for comparison
     pp = snap.get("platePay", {})
     ar = snap.get("arrears", {})
     return {
