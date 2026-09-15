@@ -2,7 +2,7 @@ name: 停车账单监控 (湘ADG3397)
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
 permissions:
