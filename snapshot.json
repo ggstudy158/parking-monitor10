@@ -1,9 +1,9 @@
 {
-  "ts": "2026-10-25 06:56:51",
+  "ts": "2026-10-25 12:18:21",
   "platePay": {
-    "currentAmount": "1.00",
-    "orderId": "2026102514565236440379",
-    "historyCountHint": "1",
+    "currentAmount": "0.50",
+    "orderId": "2026102519350029747423",
+    "historyCountHint": null,
     "plateNo": "湘ADG3397"
   },
   "arrears": {
